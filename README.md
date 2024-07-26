@@ -1,8 +1,7 @@
 # Debien/Ubuntu kubernetes-xenial package repository issue
 If you’re deploying Kubernetes (kubeadm) on x86_64 based Ubuntu 20.04 or Debian 11/12 and encountering the following error:
-
+```
 root@debian:~# curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/sha                                                                                                                        re/keyrings/kubernetes-archive-keyring.gpg
-
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https                                                                                                                        ://apt.kubernetes.io/ kubernetes-bullseye main" | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
 root@debian:~# sudo apt-get update
 Hit:1 http://deb.debian.org/debian bullseye InRelease
@@ -16,6 +15,7 @@ Reading package lists... Done
 E: The repository 'https://apt.kubernetes.io kubernetes-bullseye Release' does not have a Release file.
 N: Updating from such a repository can't be done securely, and is therefore disabled by default.
 N: See apt-secure(8) manpage for repository creation and user configuration details.
+```
 Issue:
 The error indicates that the repository https://packages.cloud.google.com/apt kubernetes-bullseye does not have a Release file, causing apt-get update to fail.
 
@@ -24,7 +24,7 @@ Here’s a detailed guide for installing Kubernetes on Ubuntu /Debian including 
 
 1. Install Docker
 Before installing Kubernetes, you’ll need Docker installed on your system. Follow these steps to install Docker on Ubuntu
-
+```
 # Update the package list
 sudo apt update
 
@@ -46,10 +46,12 @@ sudo apt install -y docker-ce
 # Start Docker and enable it to run on boot
 sudo systemctl start docker
 sudo systemctl enable docker
+```
 2. Fix Kubernetes Repository Issues
 If you’re encountering issues with Kubernetes repository references, follow these steps:
 
 Remove Old Kubernetes Repository References
+```
 # Remove old Kubernetes repository file if it exists
 sudo rm -f /etc/apt/sources.list.d/kubernetes.list
 
@@ -58,7 +60,10 @@ sudo sed -i '/kubernetes/d' /etc/apt/sources.list.d/*.list
 
 # Remove any Kubernetes-related GPG keys
 sudo rm -f /etc/apt/trusted.gpg.d/kubernetes.gpg
+```
+
 Add New Kubernetes Repository
+```
 # Add the new Kubernetes repository
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
@@ -67,11 +72,18 @@ curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --
 
 # Update the package list
 sudo apt update
+```
+
 Install Kubernetes Components
+```
 # Install Kubernetes components
 sudo apt install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
+```
+
+```
 # show version
 root@debian:~# kubectl version
 Client Version: v1.28.12
 Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+```
