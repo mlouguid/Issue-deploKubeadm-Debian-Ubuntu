@@ -7,10 +7,13 @@ Linux (Ubuntu) host VM. Single node or more than one node.
 Full network connectivity between machines
 Unique hostnames
 Port 6443 must be open. Check via
-
+```
 nc 127.0.0.1 6443
+```
 Swap disable using `sudo swapoff -a`
+```
 sudo swapoff -a
+```
 Installing a container runtime
 To run containers in Pods, Kubernetes uses a container runtime.
 
@@ -26,6 +29,7 @@ Install using the apt repository
 Before you install Docker Engine for the first time on a new host machine, you need to set up the Docker repository. Afterward, you can install and update Docker from the repository.
 
 Set up Docker’s apt repository.
+```
 # Add Docker's official GPG key:
 sudo apt-get update
 sudo apt-get install ca-certificates curl
@@ -39,9 +43,11 @@ echo \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
+```
 2. Install the containerd
-
+```
  sudo apt-get install containerd.io
+```
 This version for Ubuntu, to install for debian follow this link:
 https://docs.docker.com/engine/install/
 
@@ -54,7 +60,7 @@ For more information, see Network Plugin Requirements or the documentation for y
 
 Forwarding IPv4 and letting iptables see bridged traffic
 Execute the below mentioned instructions:
-
+```
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
@@ -72,13 +78,16 @@ EOF
 
 # Apply sysctl params without reboot
 sudo sysctl --system
+```
 Verify that the br_netfilter, overlay modules are loaded by running the following commands:
-
+```
 lsmod | grep br_netfilter
 lsmod | grep overlay
+```
 Verify that the net.bridge.bridge-nf-call-iptables, net.bridge.bridge-nf-call-ip6tables, and net.ipv4.ip_forward system variables are set to 1 in your sysctl config by running the following command:
-
+```
 sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+```
 cgroup drivers
 On Linux, control groups are used to constrain resources that are allocated to processes.
 
@@ -89,8 +98,9 @@ There are two cgroup drivers available:
 cgroupfs
 systemd
 This command modifies the containerd configuration to use systemd for cgroup management and updates the sandbox image to pause:3.9, then saves the changes to /etc/containerd/config.toml. These adjustments enhance compatibility and performance for Kubernetes clusters .
-
+```
 containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sed 's/sandbox_image = "registry.k8s.io\/pause:3.6"/sandbox_image = "registry.k8s.io\/pause:3.9"/' | sudo tee /etc/containerd/config.toml
+```
 Installing kubeadm, kubelet and kubectl
 You will install these packages on all of your machines:
 
@@ -98,46 +108,59 @@ kubeadm: the command to bootstrap the cluster.
 kubelet: the component that runs on all of the machines in your cluster and does things like starting pods and containers.
 kubectl: the command line util to talk to your cluster.
 Update the apt package index and install packages needed to use the Kubernetes apt repository:
+```
 sudo apt-get update
 # apt-transport-https may be a dummy package; if so, you can skip that package
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+```
 2. Download the public signing key for the Kubernetes package repositories. The same signing key is used for all repositories so you can disregard the version in the URL:
-
+```
 # If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
 # sudo mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+```
 3. Add the appropriate Kubernetes apt repository. Please note that this repository have packages only for Kubernetes 1.29; for other Kubernetes minor versions, you need to change the Kubernetes minor version in the URL to match your desired minor version (you should also check that you are reading the documentation for the version of Kubernetes that you plan to install).
-
+```
 # This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+```
 4. Update the apt package index, install kubelet, kubeadm and kubectl, and pin their version:
-
+```
 sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
+```
 5. (Optional) Enable the kubelet service before running kubeadm:
-
+```
 sudo systemctl enable --now kubelet
+```
 Creating a cluster with kubeadm
+```
 kubeadm init
-
+```
 To make kubectl work for your non-root user, run these commands, which are also part of the kubeadm init output:
-
+```
  mkdir -p $HOME/.kube
   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+```
 $ kubectl get node
 NAME       STATUS     ROLES           AGE    VERSION
 marouane   NotReady   control-plane   3m9s   v1.29.7
 Make Nodes Ready
+```
 Calico manifests​
 Calico can also be installed using raw manifests as an alternative to the operator. The manifests contain the necessary resources for installing Calico on each node in your Kubernetes cluster. Using manifests is not recommended as they cannot automatically manage the lifecycle of the Calico as the operator does. However, manifests may be useful for clusters that require highly specific modifications to the underlying Kubernetes resources.
 
 Install Calico with Kubernetes API datastore, 50 nodes or less​
 Download the Calico networking manifest for the Kubernetes API datastore.
-
+```
 curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml -O
+```
 If you are using pod CIDR 192.168.0.0/16, skip to the next step. If you are using a different pod CIDR with kubeadm, no changes are required — Calico will automatically detect the CIDR based on the running configuration. For other platforms, make sure you uncomment the CALICO_IPV4POOL_CIDR variable in the manifest and set it to the same value as your chosen pod CIDR.
 Customize the manifest as necessary.
 Apply the manifest using the following command.
+```
 kubectl apply -f calico.yaml
+```
